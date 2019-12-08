@@ -168,7 +168,7 @@ def run():
     games = 500
     bestfitness = 0
     currentbest = DNN(inputSize, output, layers, 0.10)
-    currentbest.load_network()
+    # currentbest.load_network()
     for _ in range(10000):
         train()
     # dnn = DNN(inputSize, output, layers, 0.10)
