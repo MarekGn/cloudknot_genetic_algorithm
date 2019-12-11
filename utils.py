@@ -49,19 +49,20 @@ def getWinner(board):
         return -1
 
 
-def put_move_player_1(board, y):
-    for index in y:
-        if board[index] == 0:
-            board[index] = 1
-            break
+def put_move_player_1(board, y, player_1):
+    index = y[0]
+    if board[index] == 0:
+        board[index] = 1
+    else:
+        player_1.bad_moves += 1
     return board
 
-
-def put_move_player_2(board, y):
-    for index in y:
-        if board[index] == 0:
-            board[index] = 2
-            break
+def put_move_player_2(board, y, player_2):
+    index = y[0]
+    if board[index] == 0:
+        board[index] = 2
+    else:
+        player_2.bad_moves += 1
     return board
 
 
@@ -124,20 +125,6 @@ def objective_function(candidate):
         currentbest = candidate
         candidate.save_network()
 
-def train():
-    layers_num = np.random.random_integers(1, 4)
-    layers = np.random.randint(5, 125, layers_num).flatten()
-
-    candidatenetwork1 = DNN(inputSize, output, layers, 0.10)
-    candidatenetwork2 = currentbest
-
-    for weight in candidatenetwork1.weights:
-        weight += np.random.normal(0, 5, np.shape(weight))
-    for weight in candidatenetwork2.weights:
-        weight += np.random.normal(0, 2, np.shape(weight))
-
-    objective_function(candidatenetwork1)
-    objective_function(candidatenetwork2)
 
 def check(grid):
     for i in range(len(grid) - 2):
@@ -176,14 +163,14 @@ output = 9
 # currentbest = DNN(inputSize, output, layers, 0.10)
 # for _ in range(100000000):
 #     train()
-dnn = DNN(inputSize, output, [2,2])
-dnn.load_network()
-board = initBoardZero(shape)
-while(getWinner(board) == -1):
-    y = dnn.forward(board.flatten())
-    y = y.argsort()[:][::-1]
-    board = put_move_player_1(board.flatten(), y)
-    printBoard(board.reshape(shape))
-    userInput = [int(input("Enter move"))]
-    board = put_move_player_2(board.flatten(), userInput)
-    board = board.reshape(shape)
+# dnn = DNN(inputSize, output, [2,2])
+# dnn.load_network()
+# board = initBoardZero(shape)
+# while(getWinner(board) == -1):
+#     y = dnn.forward(board.flatten())
+#     y = y.argsort()[:][::-1]
+#     board = put_move_player_1(board.flatten(), y)
+#     printBoard(board.reshape(shape))
+#     userInput = [int(input("Enter move"))]
+#     board = put_move_player_2(board.flatten(), userInput)
+#     board = board.reshape(shape)

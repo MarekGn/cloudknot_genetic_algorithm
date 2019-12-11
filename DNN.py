@@ -12,6 +12,7 @@ class DNN():
         self.draw = 0
         self.wins = 0
         self.loses = 0
+        self.bad_moves = 0
 
         # weights
         for layer_num in range(len(layers)):
@@ -89,4 +90,4 @@ class DNN():
         self.draw = 0
         self.wins = 0
         self.loses = 0
-
+        self.bad_moves = 0

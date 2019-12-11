@@ -2,7 +2,7 @@ import numpy as np
 from DNN import DNN
 import boto3
 import argparse
-from Main import *
+from utils import *
 import itertools
 import copy
 from random import shuffle
@@ -31,15 +31,6 @@ def setup_cmd_parser():
     return parser
 
 
-NETWORK_HIDDEN_SIZE = [9]
-INPUT = 9
-OUTPUT = 9
-GAMES = 1
-POP = 100
-BOARD = (3,3)
-RANDOMADD = 20
-PARENTS_NUM = 5
-
 def get_initial_population():
     pop = []
     for _ in range(POP):
@@ -61,17 +52,20 @@ def play_agents_tictactoe(players_couple):
     board = initBoardZero(BOARD)
     status = -1
     while status == -1:
+        copy_board = board.copy()
         player1_moves = player_1.forward(board.flatten())
         player1_moves = player1_moves.argsort()[:][::-1]
-        board = put_move_player_1(board.flatten(), player1_moves).reshape(BOARD)
+        board = put_move_player_1(board.flatten(), player1_moves, player_1).reshape(BOARD)
         status = getWinner(board)
         if status != -1:
             break
         player2_moves = player_2.forward(exchange_for_player2(board.copy().flatten()))
         player2_moves = player2_moves.argsort()[:][::-1]
-        board = put_move_player_2(board.flatten(), player2_moves).reshape(shape)
+        board = put_move_player_2(board.flatten(), player2_moves, player_2).reshape(BOARD)
         status = getWinner(board)
         if status != -1:
+            break
+        elif (board==copy_board).all():
             break
     if status == 1:
         player_1.wins += 1
@@ -92,7 +86,9 @@ def get_individual(layers):
 def generate_children(parents, pop_size, randomadd):
     children = []
     parents[0].reset_fitness()
+    parents[1].reset_fitness()
     children.append(parents[0])
+    children.append(parents[1])
     while len(children) < pop_size-randomadd:
         bio_parents = itertools.permutations(parents, 2)
         bio_parents = list(bio_parents)
@@ -123,21 +119,49 @@ def get_child(parent_couple):
     child.fromVector(childvector)
     return child
 
+
 def get_parents(pop, parents_num):
-    pop.sort(key=lambda idv: 2*idv.wins + idv.draw - 4*idv.loses, reverse=True)
+    pop.sort(key=lambda idv: 2*idv.wins + idv.draw - 2*idv.loses - 3*idv.bad_moves, reverse=True)
     return pop[:parents_num]
 
+
+def play_with_AI():
+    dnn = DNN(inputSize, output, [2,2])
+    dnn.load_network()
+    board = initBoardZero(BOARD)
+    while(getWinner(board) == -1):
+        y = dnn.forward(board.flatten())
+        y = y.argsort()[:][::-1]
+        board = put_move_player_1(board.flatten(), y, dnn)
+        printBoard(board.reshape(BOARD))
+        userInput = [int(input("Enter move"))]
+        board = put_move_player_2(board.flatten(), userInput, dnn)
+        board = board.reshape(BOARD)
+
+
+NETWORK_HIDDEN_SIZE = [7, 7]
+INPUT = 9
+OUTPUT = 9
+GAMES = 1
+POP = 50
+BOARD = (3,3)
+RANDOMADD = 5
+PARENTS_NUM = 15
 
 if __name__ == "__main__":
     parser = setup_cmd_parser()
     pop = get_initial_population()
     iters = 1000
     while iters:
-        print(iters)
+        print("Interation: {}".format(iters))
         cal_fitness(pop, GAMES)
         parents = get_parents(pop, PARENTS_NUM)
+        print(2*parents[0].wins + parents[0].draw - 2*parents[0].loses - 3*parents[0].bad_moves)
         parents[0].save_network()
         pop = generate_children(parents, POP, RANDOMADD)
         add_random(pop, RANDOMADD)
         iters -= 1
+
+
+    # play_with_AI()
 
