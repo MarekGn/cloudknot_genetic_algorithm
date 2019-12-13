@@ -1,10 +1,7 @@
-import numpy as np
 from DNN import DNN
-import boto3
 import argparse
 from utils import *
 import itertools
-import copy
 from random import shuffle
 import random
 
@@ -43,6 +40,8 @@ def cal_fitness(pop, games):
     for _ in range(games):
         for confrontation in confrontations:
             play_agents_tictactoe(confrontation)
+    for idv in pop:
+        idv.cal_fitness()
 
 
 def play_agents_tictactoe(players_couple):
@@ -58,6 +57,8 @@ def play_agents_tictactoe(players_couple):
         board = put_move_player_1(board.flatten(), player1_moves, player_1).reshape(BOARD)
         status = getWinner(board)
         if status != -1:
+            break
+        elif (board==copy_board).all():
             break
         player2_moves = player_2.forward(exchange_for_player2(board.copy().flatten()))
         player2_moves = player2_moves.argsort()[:][::-1]
@@ -95,7 +96,7 @@ def generate_children(parents, pop_size, randomadd):
         shuffle(bio_parents)
         for parent_couple in bio_parents:
             if len(children) < pop_size-randomadd:
-                children.append(get_child(parent_couple))
+                children.append(get_child_offset(parent_couple))
             else:
                 break
     return children
@@ -103,10 +104,37 @@ def generate_children(parents, pop_size, randomadd):
 
 def add_random(children, RANDOMADD):
     for _ in range(RANDOMADD):
-        children.append(DNN(INPUT,INPUT,NETWORK_HIDDEN_SIZE))
+        children.append(DNN(INPUT, INPUT, NETWORK_HIDDEN_SIZE))
 
 
-def get_child(parent_couple):
+def cal_probability(pop, alpha):
+    pop.sort(key=lambda idv: idv.fitness, reverse=True)
+    if pop[-1].fitness < 0:
+        for idv in pop:
+            idv.fitness += abs(pop[-1].fitness)
+    fitness_sum = 0
+    for idv in pop:
+        fitness_sum += idv.fitness
+    fitness_avg = fitness_sum / len(pop)
+    normalize_fitness(pop, fitness_avg, alpha)
+    fitness_sum = 0
+    for idv in pop:
+        fitness_sum += idv.fitness
+    for idv in pop:
+        idv.probability = idv.fitness / fitness_sum
+
+
+def normalize_fitness(pop, fitness_avg, alpha):
+    delta = pop[0].fitness - fitness_avg
+    if delta == 0:
+        delta = 1
+    a = (fitness_avg*(alpha - 1)) / delta
+    b = fitness_avg * (1 - a)
+    for idv in pop:
+        idv.fitness = a*idv.fitness + b
+
+
+def get_child_random(parent_couple):
     parent1vector = parent_couple[0].toVector()
     parent2vector = parent_couple[1].toVector()
     vectors = [parent1vector, parent2vector]
@@ -119,14 +147,31 @@ def get_child(parent_couple):
     child.fromVector(childvector)
     return child
 
+def get_child_offset(children, parent_couple):
+    parent1vector = parent_couple[0].toVector()
+    parent2vector = parent_couple[1].toVector()
+
+    child1 = DNN(INPUT, INPUT, NETWORK_HIDDEN_SIZE)
+    child2 = DNN(INPUT, INPUT, NETWORK_HIDDEN_SIZE)
+    offset = np.random.randint(0, len(parent1vector))
+    child1vector = np.concatenate((parent1vector[:offset], parent2vector[offset:]))
+    child1vector = np.reshape(child1vector, parent1vector.shape)
+    child1.fromVector(child1vector)
+    children.append(child1)
+
+    child2vector = np.concatenate((parent2vector[:offset], parent1vector[offset:]))
+    child2vector = np.reshape(child2vector, parent1vector.shape)
+    child2.fromVector(child2vector)
+    children.append(child2)
+    return children
 
 def get_parents(pop, parents_num):
-    pop.sort(key=lambda idv: 2*idv.wins + idv.draw - 2*idv.loses - 3*idv.bad_moves, reverse=True)
+    pop.sort(key=lambda idv: 10*idv.wins + idv.draw + idv.good_moves - 2*idv.loses - 3*idv.bad_moves, reverse=True)
     return pop[:parents_num]
 
 
 def play_with_AI():
-    dnn = DNN(inputSize, output, [2,2])
+    dnn = DNN(9, 9, [2,2])
     dnn.load_network()
     board = initBoardZero(BOARD)
     while(getWinner(board) == -1):
@@ -138,15 +183,92 @@ def play_with_AI():
         board = put_move_player_2(board.flatten(), userInput, dnn)
         board = board.reshape(BOARD)
 
+def play_with_random(agent):
+    win_draw = 0
+    for _ in range(10):
+        board = initBoardZero(BOARD)
+        while(getWinner(board) == -1):
+            player1_moves = agent.forward(board.flatten())
+            player1_moves = player1_moves.argsort()[:][::-1]
+            board = put_move_player_1(board.flatten(), player1_moves, agent).reshape(BOARD)
+            status = getWinner(board)
+            if status != -1:
+                break
+            player2_moves = np.arange(0, 9)
+            np.random.shuffle(player2_moves)
+            board = put_move_player_2(board.flatten(), player2_moves, agent).reshape(BOARD)
+            status = getWinner(board)
+            if status != -1:
+                break
+        if status == 1 or status == 0:
+            win_draw += 1
+        board = initBoardZero(BOARD)
+        while(getWinner(board) == -1):
+            player1_moves = np.arange(0, 9)
+            np.random.shuffle(player1_moves)
+            board = put_move_player_1(board.flatten(), player1_moves, agent).reshape(BOARD)
+            status = getWinner(board)
+            if status != -1:
+                break
+            player2_moves = agent.forward(exchange_for_player2(board.flatten()))
+            player2_moves = player2_moves.argsort()[:][::-1]
+            board = put_move_player_2(board.flatten(), player2_moves, agent).reshape(BOARD)
+            status = getWinner(board)
+            if status != -1:
+                break
+        if status == 2 or status == 0:
+            win_draw += 1
+    return win_draw
 
-NETWORK_HIDDEN_SIZE = [7, 7]
+
+def mutate_population(pop):
+    for idv in pop:
+        mutate_idv(idv)
+
+def mutate_idv(idv):
+    gene_vector = idv.toVector()
+    gene_prob = MUTATION_PROBABILITY / len(gene_vector)
+    for i in range(len(gene_vector)):
+        chance = np.random.uniform(0, 1)
+        if chance <= gene_prob:
+            gene_vector[i] += np.random.normal(0,10)
+    idv.fromVector(gene_vector)
+
+
+def get_new_pop(pop):
+    children = []
+    while len(children) < len(pop):
+        choice = np.random.uniform(0, 1, 2)
+        parent_1 = None
+        parent_1_call = True
+        parent_2 = None
+        parent_2_call = True
+        prob = 0
+        for idv in pop:
+            prob += idv.probability
+            if choice[0] <= prob and parent_1_call:
+                parent_1 = idv
+                parent_1_call = False
+            if choice[1] <= prob and parent_2_call:
+                parent_2 = idv
+                parent_2_call = False
+            if not parent_1_call and not parent_2_call:
+                break
+        if parent_1 is parent_2:
+            continue
+        else:
+            get_child_offset(children, [parent_1, parent_2])
+    return children
+
+
+NETWORK_HIDDEN_SIZE = [14, 14]
 INPUT = 9
 OUTPUT = 9
 GAMES = 1
-POP = 50
+POP = 500
 BOARD = (3,3)
-RANDOMADD = 5
-PARENTS_NUM = 15
+MUTATION_PROBABILITY = 0.05
+ALPHA = 1.5
 
 if __name__ == "__main__":
     parser = setup_cmd_parser()
@@ -154,14 +276,12 @@ if __name__ == "__main__":
     iters = 1000
     while iters:
         print("Interation: {}".format(iters))
+        random = 0
         cal_fitness(pop, GAMES)
-        parents = get_parents(pop, PARENTS_NUM)
-        print(2*parents[0].wins + parents[0].draw - 2*parents[0].loses - 3*parents[0].bad_moves)
-        parents[0].save_network()
-        pop = generate_children(parents, POP, RANDOMADD)
-        add_random(pop, RANDOMADD)
+        cal_probability(pop, ALPHA)
+        print(pop[0].fitness)
+        pop[0].save_network()
+        pop = get_new_pop(pop)
+        mutate_population(pop)
         iters -= 1
-
-
-    # play_with_AI()
-
+    play_with_AI()

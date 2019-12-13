@@ -53,18 +53,34 @@ def put_move_player_1(board, y, player_1):
     index = y[0]
     if board[index] == 0:
         board[index] = 1
+        player_1.good_moves += 1
     else:
         player_1.bad_moves += 1
     return board
+
 
 def put_move_player_2(board, y, player_2):
     index = y[0]
     if board[index] == 0:
         board[index] = 2
+        player_2.good_moves += 1
     else:
         player_2.bad_moves += 1
     return board
 
+# def put_move_player_1(board, y, player_1):
+#     for index in y:
+#         if board[index] == 0:
+#             board[index] = 1
+#             break
+#     return board
+#
+# def put_move_player_2(board, y, player_2):
+#     for index in y:
+#         if board[index] == 0:
+#             board[index] = 2
+#             break
+#     return board
 
 def exchange_for_player2(board):
     board[board == 1] = 3
@@ -74,7 +90,7 @@ def exchange_for_player2(board):
     return board
 
 
-def check_fitness(candidate, currentbest):
+def check_fitness(candidate, currentbest, shape):
     wins = 0
     loses = 0
     for _ in range(games):
@@ -150,27 +166,3 @@ def check_rows(board):
             elif i[j] == i[j+1] == i[j+2] == 2:
                 return 2
     return 0
-
-shape = (3,3)
-inputSize = 9
-output = 9
-
-# layers_num = np.random.random_integers(1,4)
-# layers = np.random.randint(5, 125, layers_num).flatten()
-
-# games = 20
-# bestfitness = 0
-# currentbest = DNN(inputSize, output, layers, 0.10)
-# for _ in range(100000000):
-#     train()
-# dnn = DNN(inputSize, output, [2,2])
-# dnn.load_network()
-# board = initBoardZero(shape)
-# while(getWinner(board) == -1):
-#     y = dnn.forward(board.flatten())
-#     y = y.argsort()[:][::-1]
-#     board = put_move_player_1(board.flatten(), y)
-#     printBoard(board.reshape(shape))
-#     userInput = [int(input("Enter move"))]
-#     board = put_move_player_2(board.flatten(), userInput)
-#     board = board.reshape(shape)

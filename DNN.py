@@ -13,6 +13,9 @@ class DNN():
         self.wins = 0
         self.loses = 0
         self.bad_moves = 0
+        self.good_moves = 0
+        self.probability = 0
+        self.fitness = 0
 
         # weights
         for layer_num in range(len(layers)):
@@ -86,8 +89,14 @@ class DNN():
     def save_network(self):
         np.save("dnn.npy", {"weights": self.weights, "biases": self.bias})
 
+    def cal_fitness(self):
+        self.fitness = self.wins + self.draw - 100*self.bad_moves
+
     def reset_fitness(self):
         self.draw = 0
         self.wins = 0
         self.loses = 0
         self.bad_moves = 0
+        self.good_moves = 0
+        self.probability = 0
+        self.fitness = 0
