@@ -2,8 +2,10 @@ import itertools
 import numpy as np
 from play_utils import *
 
+
 class Population():
     def __init__(self, pop_size, input_size, hidden_layers, output_size):
+        self.id = np.random.randint(0, 1000000)
         self.pop = self._get_initial_population(pop_size, input_size, hidden_layers, output_size)
         self.pop_size = pop_size
         self.idv_input_size = input_size
@@ -16,6 +18,7 @@ class Population():
             play_agents_tictactoe(confrontation, board_shape)
         for idv in self.pop:
             idv.cal_fitness()
+        self.pop.sort(key=lambda idv: idv.fitness, reverse=True)
 
     def _get_initial_population(self, pop_size, input_size, hidden_layers, output_size):
         pop = []
@@ -55,7 +58,7 @@ class Population():
 
     def get_new_pop(self):
         children = []
-        while len(children) < len(self.pop):
+        while len(children) < self.pop_size:
             choice = np.random.uniform(0, 1, 2)
             parent_1 = None
             parent_1_call = True
@@ -105,11 +108,25 @@ class Population():
         for i in range(len(gene_vector)):
             chance = np.random.uniform(0, 1)
             if chance <= gene_prob:
-                gene_vector[i] += np.random.normal(0,10)
+                gene_vector[i] += np.random.normal(0, 10)
         idv.fromVector(gene_vector)
 
     def save_best_network(self):
         self.pop[0].save_network()
+
+    def upload_best_networks_s3(self, workers_num):
+        from botocore.exceptions import ClientError
+        import boto3
+
+        best_idvs = self.pop[:int(self.pop_size/workers_num)]
+        np.save("best_nets{}.npy".format(self.id), best_idvs, allow_pickle=True)
+        s3_client = boto3.client('s3')
+        try:
+            s3_client.upload_file("best_nets{}.npy".format(self.id), "besttictactoe", "best_nets{}.npy".format(self.id))
+            return True
+        except ClientError as e:
+            print(e.args)
+            return False
 
 
 
