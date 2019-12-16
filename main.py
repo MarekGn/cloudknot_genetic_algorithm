@@ -5,8 +5,8 @@ from s3_utils import *
 
 
 def train_networks(iterations, pop_size, input_size, output_size, hidden_layers, board_shape, alpha, mutation_probability):
+    pop = Population(pop_size=pop_size, input_size=input_size, output_size=output_size, hidden_layers=hidden_layers)
     for _ in tqdm(range(iterations), desc="Iterations Progress: "):
-        pop = Population(pop_size=pop_size, input_size=input_size, output_size=output_size, hidden_layers=hidden_layers)
         pop.cal_fitness(board_shape=board_shape)
         pop.cal_probability(alpha=alpha)
         pop.save_best_network()
