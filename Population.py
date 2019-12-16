@@ -114,7 +114,7 @@ class Population():
     def save_best_network(self):
         self.pop[0].save_network()
 
-    def upload_best_networks_s3(self, workers_num):
+    def upload_best_networks_s3(self, workers_num, bucket_name):
         from botocore.exceptions import ClientError
         import boto3
 
@@ -122,7 +122,7 @@ class Population():
         np.save("best_nets{}.npy".format(self.id), best_idvs, allow_pickle=True)
         s3_client = boto3.client('s3')
         try:
-            s3_client.upload_file("best_nets{}.npy".format(self.id), "besttictactoe", "best_nets{}.npy".format(self.id))
+            s3_client.upload_file("best_nets{}.npy".format(self.id), bucket_name, "best_nets{}.npy".format(self.id))
             return True
         except ClientError as e:
             print(e.args)
