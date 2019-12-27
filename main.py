@@ -51,15 +51,15 @@ if __name__ == "__main__":
     workers_num = 1
     bucket_name = 'besttictactoe'
 
-    distributed_training(
-        pop_size=pop_size,
-        input_size=input_size,
-        output_size=output_size,
-        hidden_layers=hidden_layers,
-        board_shape=board_shape,
-        workers_num=workers_num,
-        alpha=alpha,
-        mutation_probability=mutation_probability,
-        iterations=iterations,
-        bucket_name=bucket_name
-    )
+    # distributed_training(
+    #     pop_size=pop_size,
+    #     input_size=input_size,
+    #     output_size=output_size,
+    #     hidden_layers=hidden_layers,
+    #     board_shape=board_shape,
+    #     workers_num=workers_num,
+    #     alpha=alpha,
+    #     mutation_probability=mutation_probability,
+    #     iterations=iterations,
+    #     bucket_name=bucket_name
+    # )
