@@ -2,6 +2,7 @@ import boto3
 import time
 import numpy as np
 
+
 def wait_for_other_workers(workers_num, bucket_name):
     client = boto3.client('s3')
     for i in range(60):

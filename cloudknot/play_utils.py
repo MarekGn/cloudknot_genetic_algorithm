@@ -1,5 +1,5 @@
-from Board import Board
-from DNN import DNN
+from cloudknot.Board import Board
+from cloudknot.DNN import DNN
 
 
 def play_agents_tictactoe(players_couple, board_shape):

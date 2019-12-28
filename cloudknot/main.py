@@ -1,7 +1,7 @@
-from Population import Population
-from play_utils import play_with_ai
+from cloudknot.Population import Population
+from cloudknot.play_utils import play_with_ai
 from tqdm import tqdm
-from s3_utils import *
+from cloudknot.s3_utils import *
 
 
 def train_networks(iterations, pop_size, input_size, output_size, hidden_layers, board_shape, alpha, mutation_probability):
