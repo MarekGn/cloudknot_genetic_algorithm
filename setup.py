@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="cloudknot-genetic-pkg-MarekGn", # Replace with your own username
+    name="geneticknot-MarekGn", # Replace with your own username
     version="0.1.0",
     author="Marek",
     author_email="",
