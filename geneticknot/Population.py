@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-from cloudknot.play_utils import *
+from geneticknot.play_utils import *
 
 
 class Population():
