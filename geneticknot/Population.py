@@ -4,8 +4,8 @@ from geneticknot.play_utils import *
 
 
 class Population():
-    def __init__(self, pop_size, input_size, hidden_layers, output_size):
-        self.id = np.random.randint(0, 1000000)
+    def __init__(self, id, pop_size, input_size, hidden_layers, output_size):
+        self.id = id
         self.pop = self._get_initial_population(pop_size, input_size, hidden_layers, output_size)
         self.pop_size = pop_size
         self.idv_input_size = input_size
@@ -128,6 +128,31 @@ class Population():
             print(e.args)
             return False
 
+    def upload_best_network(self, bucket_name):
+        from botocore.exceptions import ClientError
+        import boto3
+
+        np.save("BEST_NET.npy", self.pop[0], allow_pickle=True)
+        s3_client = boto3.client('s3')
+        try:
+            s3_client.upload_file("BEST_NET.npy", bucket_name, "BEST_NET.npy")
+            return True
+        except ClientError as e:
+            print(e.args)
+            return False
+
+    def upload_best_network_with_priority_s3(self, bucket_name):
+        from botocore.exceptions import ClientError
+        import boto3
+        if self.id == 1:
+            np.save("BEST_NET.npy", self.pop[0], allow_pickle=True)
+            s3_client = boto3.client('s3')
+            try:
+                s3_client.upload_file("BEST_NET.npy", bucket_name, "BEST_NET.npy")
+                return True
+            except ClientError as e:
+                print(e.args)
+                return False
 
 
 
