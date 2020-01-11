@@ -25,8 +25,8 @@ def init_times(bucket_name):
 
 def check_modifies(times, bucket_name, workers_num):
     client = boto3.client('s3')
-    results = client.list_objects(Bucket=bucket_name)
     for i in range(300):
+        results = client.list_objects(Bucket=bucket_name)
         check = 0
         for file_dic in results["Contents"]:
             if times[file_dic["Key"]] != file_dic["LastModified"]:

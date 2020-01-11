@@ -29,8 +29,9 @@ def distributed_training(ident, pop_size, input_size, output_size, hidden_layers
         for _ in tqdm(range(iterations-1), desc="Iterations Progress: "):
             pop.cal_fitness(board_shape=board_shape)
             pop.upload_best_networks_s3(workers_num, bucket_name)
-            check2 =  check_modifies(times, bucket_name, workers_num)
+            check2 = check_modifies(times, bucket_name, workers_num)
             if check2 is True:
+                print(times)
                 population = download_pops(bucket_name)
                 pop.pop = population
                 pop.cal_probability(alpha=alpha)
@@ -44,3 +45,6 @@ def distributed_training(ident, pop_size, input_size, output_size, hidden_layers
         return best_network
     else:
         return "Initial wait error"
+
+if __name__ == '__main__':
+    distributed_training(3, 50, 9, 9, [7, 7], (3,3), 3, 1.3, 0.02, 10, 'besttictactoe', "bestnetworktictactoe")
