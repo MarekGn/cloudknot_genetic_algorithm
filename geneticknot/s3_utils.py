@@ -5,11 +5,11 @@ import numpy as np
 
 def wait_for_other_workers(workers_num, bucket_name):
     client = boto3.client('s3')
-    for i in range(60):
+    for i in range(300):
         results = client.list_objects(Bucket=bucket_name)
         if len(results["Contents"]) == workers_num:
             return True
-        elif i == 59:
+        elif i == 299:
             return False
         time.sleep(1)
 
@@ -23,18 +23,21 @@ def init_times(bucket_name):
     return times
 
 
-def check_modifies(times, bucket_name):
+def check_modifies(times, bucket_name, workers_num):
     client = boto3.client('s3')
     results = client.list_objects(Bucket=bucket_name)
-    for i in range(10):
+    for i in range(300):
+        check = 0
         for file_dic in results["Contents"]:
             if times[file_dic["Key"]] != file_dic["LastModified"]:
+                check += 1
+        if check == workers_num:
+            for file_dic in results["Contents"]:
                 times[file_dic["Key"]] = file_dic["LastModified"]
-            elif i == 9:
-                return False
-            else:
-                time.sleep(1)
-        return True
+            return True
+        elif i == 299:
+            return False
+        time.sleep(1)
 
 
 def download_pops(bucket_name):
