@@ -1,5 +1,4 @@
 import numpy as np
-import os
 
 
 class DNN():
@@ -49,10 +48,10 @@ class DNN():
         return y
 
     def bent(self, x):
-        return ((np.sqrt(np.power(x, 2) + 1) - 1) / 2) + x
+        return np.exp(x) - np.exp(-x) / (np.exp(x) + np.exp(-x))
 
     def bentPrime(self, x):
-        return x / (2 * np.sqrt(np.power(x, 2) + 1)) + 1
+        return 1 - self.bent(x) ** 2
 
     def sigma(self, x):
         return 1/(1 + np.exp(-x))
